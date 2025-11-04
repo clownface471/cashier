@@ -37,7 +37,10 @@ class AsvertaApp extends ConsumerWidget {
           centerTitle: true,
           elevation: 0,
         ),
-        cardTheme: CardTheme(
+        // ==== FIX ====
+        // Class yang benar adalah CardThemeData, bukan CardTheme.
+        cardTheme: CardThemeData(
+        // ==== AKHIR FIX ====
           elevation: 2,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),

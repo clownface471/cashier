@@ -34,12 +34,17 @@ class CategoryRepository {
     required String name,
     String? description,
   }) {
+    // ==== FIX ====
+    // Kita panggil constructor default (CategoriesCompanion), BUKAN CategoriesCompanion.insert().
+    // Ini agar 'id' menjadi 'Value.absent()' dan bisa ditangani oleh
+    // logika auto-generate UUID di 'app_database.dart'.
     return _database.insertCategory(
-      CategoriesCompanion.insert(
-        name: name,
+      CategoriesCompanion(
+        name: Value(name),
         description: Value(description),
       ),
     );
+    // ==== AKHIR FIX ====
   }
 
   // Update category

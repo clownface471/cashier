@@ -62,9 +62,12 @@ class ProductRepository {
     String? description,
     String? imageUrl,
   }) {
+    // ==== FIX ====
+    // Sama seperti di category_repository.dart, kita gunakan constructor default
+    // ProductsCompanion() agar 'id' bisa di-generate otomatis oleh database.
     return _database.insertProduct(
-      ProductsCompanion.insert(
-        name: name,
+      ProductsCompanion(
+        name: Value(name),
         sku: Value(sku),
         barcode: Value(barcode),
         costPrice: Value(costPrice),
@@ -76,6 +79,7 @@ class ProductRepository {
         imageUrl: Value(imageUrl),
       ),
     );
+    // ==== AKHIR FIX ====
   }
 
   // Update product

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:drift/drift.dart'; // ==== FIX: Tambahkan import ini ====
 import '../../../data/database/app_database.dart';
 import '../../providers/product_provider.dart';
 import '../../providers/category_provider.dart';
@@ -298,6 +299,9 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
 
       if (_isEditMode && _existingProduct != null) {
         // Update existing product
+        // ==== FIX ====
+        // 'copyWith' pada ProductData yang di-generate Drift
+        // menggunakan 'Value' wrapper. Ini membutuhkan import 'package:drift/drift.dart'.
         final updatedProduct = _existingProduct!.copyWith(
           name: _nameController.text.trim(),
           sku: Value(_skuController.text.trim().isEmpty
@@ -315,6 +319,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
               ? null
               : _descriptionController.text.trim()),
         );
+        // ==== AKHIR FIX ====
 
         await repository.updateProduct(updatedProduct);
       } else {
@@ -329,7 +334,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
               : _barcodeController.text.trim(),
           costPrice: double.parse(_costPriceController.text),
           sellingPrice: double.parse(_sellingPriceController.text),
-          stock: int.parse(_stockController.text),
+          stock: int.parse(_stockController.text.isEmpty ? '0' : _stockController.text), // Default ke 0 jika kosong
           minStock: int.parse(_minStockController.text.isEmpty ? '0' : _minStockController.text),
           categoryId: _selectedCategoryId,
           description: _descriptionController.text.trim().isEmpty
