@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'presentation/screens/products/products_screen.dart';
+// ==== FIX: Ubah import ke MainScreen ====
+import 'presentation/screens/main_screen.dart';
+// ==== AKHIR FIX ====
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -37,10 +39,7 @@ class AsvertaApp extends ConsumerWidget {
           centerTitle: true,
           elevation: 0,
         ),
-        // ==== FIX ====
-        // Class yang benar adalah CardThemeData, bukan CardTheme.
         cardTheme: CardThemeData(
-        // ==== AKHIR FIX ====
           elevation: 2,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
@@ -54,7 +53,10 @@ class AsvertaApp extends ConsumerWidget {
           fillColor: Colors.grey[50],
         ),
       ),
-      home: const ProductsScreen(), // Start with Products screen
+      // ==== FIX: Ganti home ke MainScreen ====
+      home: const MainScreen(),
+      // ==== AKHIR FIX ====
     );
   }
 }
+
