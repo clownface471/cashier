@@ -43,6 +43,24 @@ final customersStreamProvider =
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef CustomersStreamRef = AutoDisposeStreamProviderRef<List<CustomerData>>;
+String _$activeCustomersHash() => r'72a888dd000da26d54601e2cdcf7965006c2658f';
+
+/// See also [activeCustomers].
+@ProviderFor(activeCustomers)
+final activeCustomersProvider =
+    AutoDisposeFutureProvider<List<CustomerData>>.internal(
+  activeCustomers,
+  name: r'activeCustomersProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$activeCustomersHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef ActiveCustomersRef = AutoDisposeFutureProviderRef<List<CustomerData>>;
 String _$searchCustomersHash() => r'9c0d17765dd40e2033e5bf6c12e790dec874edb3';
 
 /// Copied from Dart SDK

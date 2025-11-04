@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'products/products_screen.dart';
 import 'customers/customers_screen.dart';
+// ==== TAMBAHAN BARU: Import layar transaksi ====
+import 'transactions/transactions_screen.dart';
+// ==== AKHIR TAMBAHAN BARU ====
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -12,21 +15,20 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
 
+  // ==== FIX: Ganti placeholder dengan screen asli ====
   static const List<Widget> _screens = <Widget>[
     ProductsScreen(),
     CustomersScreen(),
-    // TODO: Tambahkan layar Transaksi di sini
-    Scaffold(
-        body: Center(child: Text('Transaksi - Coming Soon'))),
+    TransactionsScreen(), // <-- Sudah bukan placeholder lagi
     // TODO: Tambahkan layar Laporan di sini
-    Scaffold(
-        body: Center(child: Text('Laporan - Coming Soon'))),
+    Scaffold(body: Center(child: Text('Laporan - Coming Soon'))),
     // TODO: Tambahkan layar Pengaturan di sini
-    Scaffold(
-        body: Center(child: Text('Pengaturan - Coming Soon'))),
+    Scaffold(body: Center(child: Text('Pengaturan - Coming Soon'))),
   ];
+  // ==== AKHIR FIX ====
 
   void _onItemTapped(int index) {
+// ... (isi method tetap sama) ...
     setState(() {
       _selectedIndex = index;
     });
@@ -34,6 +36,7 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
+// ... (isi method tetap sama) ...
     return Scaffold(
       body: IndexedStack(
         index: _selectedIndex,
@@ -74,3 +77,4 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 }
+

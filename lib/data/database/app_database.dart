@@ -17,8 +17,20 @@ part 'app_database.g.dart';
 // UUID generator instance
 const uuid = Uuid();
 
+// ==== TAMBAHAN BARU: Data class untuk hasil JOIN ====
+/// Class kustom untuk menampung hasil query JOIN
+/// antara Transactions dan Customers.
+class TransactionWithCustomer {
+  final TransactionData transaction;
+  final CustomerData customer;
+
+  TransactionWithCustomer(this.transaction, this.customer);
+}
+// ==== AKHIR TAMBAHAN BARU ====
+
 /// Main Database Class using Drift
 @DriftDatabase(tables: [
+// ... (daftar tabel tetap sama) ...
   Products,
   Categories,
   Customers,
@@ -32,11 +44,13 @@ const uuid = Uuid();
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
+// ... (schemaVersion dan migration tetap sama) ...
   @override
   int get schemaVersion => 1;
 
   @override
   MigrationStrategy get migration {
+// ... (isi migration tetap sama) ...
     return MigrationStrategy(
       onCreate: (Migrator m) async {
         await m.createAll();
@@ -73,12 +87,13 @@ class AppDatabase extends _$AppDatabase {
 
   // ==================== PRODUCTS ====================
   
+// ... (method Products tetap sama) ...
   Future<List<ProductData>> getAllProducts() => select(products).get();
   
   Future<List<ProductData>> getActiveProducts() {
     return (select(products)..where((p) => p.isActive.equals(true))).get();
   }
-  
+// ... (sisa method Products tetap sama) ...
   Future<ProductData?> getProductById(String id) {
     return (select(products)..where((p) => p.id.equals(id))).getSingleOrNull();
   }
@@ -109,6 +124,7 @@ class AppDatabase extends _$AppDatabase {
 
   // ==================== CATEGORIES ====================
   
+// ... (method Categories tetap sama) ...
   Future<List<CategoryData>> getAllCategories() => select(categories).get();
   
   Future<int> insertCategory(CategoriesCompanion category) {
@@ -120,6 +136,7 @@ class AppDatabase extends _$AppDatabase {
 
   // ==================== CUSTOMERS ====================
   
+// ... (method Customers tetap sama) ...
   Future<List<CustomerData>> getAllCustomers() => select(customers).get();
   
   Future<List<CustomerData>> getActiveCustomers() {
@@ -155,8 +172,31 @@ class AppDatabase extends _$AppDatabase {
     return (select(transactions)
       ..orderBy([(t) => OrderingTerm.desc(t.transactionDate)])).get();
   }
+
+  // ==== TAMBAHAN BARU: Query JOIN untuk Transactions dan Customers ====
+  Stream<List<TransactionWithCustomer>> watchAllTransactionsWithCustomer() {
+    // Buat query JOIN antara transactions dan customers
+    final query = select(transactions).join([
+      innerJoin(customers, customers.id.equalsExp(transactions.customerId))
+    ]);
+    
+    // Urutkan berdasarkan tanggal transaksi terbaru
+    query.orderBy([OrderingTerm.desc(transactions.transactionDate)]);
+
+    // Tonton query dan petakan hasilnya ke class kustom kita
+    return query.watch().map((rows) {
+      return rows.map((row) {
+        return TransactionWithCustomer(
+          row.readTable(transactions),
+          row.readTable(customers),
+        );
+      }).toList();
+    });
+  }
+  // ==== AKHIR TAMBAHAN BARU ====
   
   Future<TransactionData?> getTransactionById(String id) {
+// ... (sisa method Transactions tetap sama) ...
     return (select(transactions)..where((t) => t.id.equals(id))).getSingleOrNull();
   }
   
@@ -185,6 +225,7 @@ class AppDatabase extends _$AppDatabase {
 
   // ==================== TRANSACTION ITEMS ====================
   
+// ... (sisa method database tetap sama) ...
   Future<List<TransactionItemData>> getTransactionItems(String transactionId) {
     return (select(transactionItems)
       ..where((ti) => ti.transactionId.equals(transactionId))).get();
@@ -253,6 +294,7 @@ class AppDatabase extends _$AppDatabase {
 }
 
 LazyDatabase _openConnection() {
+// ... (method _openConnection tetap sama) ...
   return LazyDatabase(() async {
     final dbFolder = await getApplicationDocumentsDirectory();
     final file = File(p.join(dbFolder.path, 'asverta_db.sqlite'));

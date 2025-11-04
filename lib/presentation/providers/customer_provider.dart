@@ -1,9 +1,5 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-// ==== FIX: Path import salah ====
-// '..' (satu tingkat naik) hanya membawa kita ke 'lib/presentation'.
-// Kita perlu '..' (dua tingkat naik) untuk sampai ke 'lib/' lalu masuk ke 'data/'.
 import '../../data/database/app_database.dart';
-// ==== AKHIR FIX ====
 import '../../data/repositories/customer_repository.dart';
 import 'database_provider.dart';
 
@@ -23,6 +19,15 @@ Stream<List<CustomerData>> customersStream(CustomersStreamRef ref) {
   return repository.watchAllCustomers();
 }
 
+// ==== TAMBAHAN BARU YANG HILANG ====
+// Get active customers only
+@riverpod
+Future<List<CustomerData>> activeCustomers(ActiveCustomersRef ref) {
+  final repository = ref.watch(customerRepositoryProvider);
+  return repository.getActiveCustomers();
+}
+// ==== AKHIR TAMBAHAN BARU ====
+
 // Search customers (Future)
 @riverpod
 Future<List<CustomerData>> searchCustomers(
@@ -32,4 +37,5 @@ Future<List<CustomerData>> searchCustomers(
   final repository = ref.watch(customerRepositoryProvider);
   return repository.searchCustomers(query);
 }
+
 
