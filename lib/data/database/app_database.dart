@@ -5,7 +5,6 @@ import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 import 'package:uuid/uuid.dart';
 
-// Import all table definitions
 import 'tables/products_table.dart';
 import 'tables/customers_table.dart';
 import 'tables/transactions_table.dart';
@@ -14,23 +13,45 @@ import 'tables/other_tables.dart';
 
 part 'app_database.g.dart';
 
-// UUID generator instance
 const uuid = Uuid();
 
-// ==== TAMBAHAN BARU: Data class untuk hasil JOIN ====
-/// Class kustom untuk menampung hasil query JOIN
-/// antara Transactions dan Customers.
 class TransactionWithCustomer {
   final TransactionData transaction;
   final CustomerData customer;
 
-  TransactionWithCustomer(this.transaction, this.customer);
+  TransactionWithCustomer({
+    required this.transaction,
+    required this.customer,
+  });
 }
-// ==== AKHIR TAMBAHAN BARU ====
 
-/// Main Database Class using Drift
+class TransactionFullDetails {
+  final TransactionData transaction;
+  final CustomerData customer;
+  final List<TransactionItemData> items;
+
+  TransactionFullDetails({
+    required this.transaction,
+    required this.customer,
+    required this.items,
+  });
+}
+
+class DashboardStats {
+  final double totalReceivables;
+  final double totalSalesToday;
+  final int newCustomersThisMonth;
+  final int transactionsToday;
+
+  DashboardStats({
+    required this.totalReceivables,
+    required this.totalSalesToday,
+    required this.newCustomersThisMonth,
+    required this.transactionsToday,
+  });
+}
+
 @DriftDatabase(tables: [
-// ... (daftar tabel tetap sama) ...
   Products,
   Categories,
   Customers,
@@ -44,18 +65,15 @@ class TransactionWithCustomer {
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
-// ... (schemaVersion dan migration tetap sama) ...
   @override
   int get schemaVersion => 1;
 
   @override
   MigrationStrategy get migration {
-// ... (isi migration tetap sama) ...
     return MigrationStrategy(
       onCreate: (Migrator m) async {
         await m.createAll();
         
-        // Insert default store settings
         await into(storeSettings).insert(
           StoreSettingsCompanion.insert(
             id: const Value(1),
@@ -66,40 +84,31 @@ class AppDatabase extends _$AppDatabase {
           ),
         );
 
-        // Insert default admin user (Owner)
-        // Password: admin123 (You should hash this in production)
         await into(users).insert(
           UsersCompanion.insert(
             id: uuid.v4(),
             username: 'admin',
-            password: 'admin123', // TODO: Hash this with bcrypt
+            password: 'admin123',
             fullName: 'Administrator',
             role: const Value('owner'),
             isActive: const Value(true),
           ),
         );
       },
-      onUpgrade: (Migrator m, int from, int to) async {
-        // Handle future schema upgrades here
-      },
     );
   }
 
-  // ==================== PRODUCTS ====================
-  
-// ... (method Products tetap sama) ...
   Future<List<ProductData>> getAllProducts() => select(products).get();
   
   Future<List<ProductData>> getActiveProducts() {
     return (select(products)..where((p) => p.isActive.equals(true))).get();
   }
-// ... (sisa method Products tetap sama) ...
+  
   Future<ProductData?> getProductById(String id) {
     return (select(products)..where((p) => p.id.equals(id))).getSingleOrNull();
   }
   
   Future<int> insertProduct(ProductsCompanion product) {
-    // Ensure ID is set if not provided
     final productWithId = product.id == const Value.absent()
         ? product.copyWith(id: Value(uuid.v4()))
         : product;
@@ -121,10 +130,7 @@ class AppDatabase extends _$AppDatabase {
           updatedAt: Value(DateTime.now()),
         ));
   }
-
-  // ==================== CATEGORIES ====================
   
-// ... (method Categories tetap sama) ...
   Future<List<CategoryData>> getAllCategories() => select(categories).get();
   
   Future<int> insertCategory(CategoriesCompanion category) {
@@ -133,10 +139,7 @@ class AppDatabase extends _$AppDatabase {
         : category;
     return into(categories).insert(categoryWithId);
   }
-
-  // ==================== CUSTOMERS ====================
   
-// ... (method Customers tetap sama) ...
   Future<List<CustomerData>> getAllCustomers() => select(customers).get();
   
   Future<List<CustomerData>> getActiveCustomers() {
@@ -165,136 +168,117 @@ class AppDatabase extends _$AppDatabase {
           updatedAt: Value(DateTime.now()),
         ));
   }
-
-  // ==================== TRANSACTIONS ====================
   
-  Future<List<TransactionData>> getAllTransactions() {
-    return (select(transactions)
-      ..orderBy([(t) => OrderingTerm.desc(t.transactionDate)])).get();
-  }
-
-  // ==== TAMBAHAN BARU: Query JOIN untuk Transactions dan Customers ====
   Stream<List<TransactionWithCustomer>> watchAllTransactionsWithCustomer() {
-    // Buat query JOIN antara transactions dan customers
     final query = select(transactions).join([
-      innerJoin(customers, customers.id.equalsExp(transactions.customerId))
-    ]);
-    
-    // Urutkan berdasarkan tanggal transaksi terbaru
-    query.orderBy([OrderingTerm.desc(transactions.transactionDate)]);
+      innerJoin(customers, customers.id.equalsExp(transactions.customerId)),
+    ])
+      ..where(transactions.status.isNotValue('cancelled'))
+      ..orderBy([OrderingTerm.desc(transactions.transactionDate)]);
 
-    // Tonton query dan petakan hasilnya ke class kustom kita
     return query.watch().map((rows) {
       return rows.map((row) {
         return TransactionWithCustomer(
-          row.readTable(transactions),
-          row.readTable(customers),
+          transaction: row.readTable(transactions),
+          customer: row.readTable(customers),
         );
       }).toList();
     });
   }
-  // ==== AKHIR TAMBAHAN BARU ====
-  
-  Future<TransactionData?> getTransactionById(String id) {
-// ... (sisa method Transactions tetap sama) ...
-    return (select(transactions)..where((t) => t.id.equals(id))).getSingleOrNull();
-  }
-  
-  Future<List<TransactionData>> getTransactionsByCustomer(String customerId) {
-    return (select(transactions)
-      ..where((t) => t.customerId.equals(customerId))
-      ..orderBy([(t) => OrderingTerm.desc(t.transactionDate)])).get();
-  }
-  
-  Future<List<TransactionData>> getActiveTransactions() {
-    return (select(transactions)
-      ..where((t) => t.status.equals('active'))
-      ..orderBy([(t) => OrderingTerm.asc(t.nextPaymentDue)])).get();
-  }
-  
-  Future<int> insertTransaction(TransactionsCompanion transaction) {
-    final transactionWithId = transaction.id == const Value.absent()
-        ? transaction.copyWith(id: Value(uuid.v4()))
-        : transaction;
-    return into(transactions).insert(transactionWithId);
-  }
-  
-  Future<bool> updateTransaction(TransactionsCompanion transaction) {
-    return update(transactions).replace(transaction);
+
+  Future<TransactionFullDetails> getFullTransactionDetails(String transactionId) async {
+    final tx = await (select(transactions)..where((t) => t.id.equals(transactionId))).getSingle();
+    final customer = await (select(customers)..where((c) => c.id.equals(tx.customerId))).getSingle();
+    final items = await (select(transactionItems)..where((i) => i.transactionId.equals(transactionId))).get();
+
+    return TransactionFullDetails(
+      transaction: tx,
+      customer: customer,
+      items: items,
+    );
   }
 
-  // ==================== TRANSACTION ITEMS ====================
-  
-// ... (sisa method database tetap sama) ...
-  Future<List<TransactionItemData>> getTransactionItems(String transactionId) {
-    return (select(transactionItems)
-      ..where((ti) => ti.transactionId.equals(transactionId))).get();
-  }
-  
-  Future<int> insertTransactionItem(TransactionItemsCompanion item) {
-    final itemWithId = item.id == const Value.absent()
-        ? item.copyWith(id: Value(uuid.v4()))
-        : item;
-    return into(transactionItems).insert(itemWithId);
-  }
-
-  // ==================== PAYMENTS ====================
-  
-  Future<List<PaymentData>> getAllPayments() {
+  Stream<List<PaymentData>> watchPaymentsForTransaction(String transactionId) {
     return (select(payments)
-      ..orderBy([(p) => OrderingTerm.desc(p.paymentDate)])).get();
-  }
-  
-  Future<List<PaymentData>> getPaymentsByTransaction(String transactionId) {
-    return (select(payments)
-      ..where((p) => p.transactionId.equals(transactionId))
-      ..orderBy([(p) => OrderingTerm.asc(p.installmentNumber)])).get();
-  }
-  
-  Future<int> insertPayment(PaymentsCompanion payment) {
-    final paymentWithId = payment.id == const Value.absent()
-        ? payment.copyWith(id: Value(uuid.v4()))
-        : payment;
-    return into(payments).insert(paymentWithId);
+          ..where((p) => p.transactionId.equals(transactionId))
+          ..orderBy([(p) => OrderingTerm.asc(p.paymentDate)]))
+        .watch();
   }
 
-  // ==================== USERS ====================
-  
-  Future<UserData?> getUserByUsername(String username) {
-    return (select(users)..where((u) => u.username.equals(username)))
-        .getSingleOrNull();
-  }
-  
-  Future<List<UserData>> getAllUsers() => select(users).get();
+  Future<DashboardStats> getDashboardStats() async {
+    final now = DateTime.now();
+    final startOfDay = DateTime(now.year, now.month, now.day);
+    final startOfMonth = DateTime(now.year, now.month, 1);
 
-  // ==================== EXPENSES ====================
-  
-  Future<List<ExpenseData>> getAllExpenses() {
-    return (select(expenses)
-      ..orderBy([(e) => OrderingTerm.desc(e.expenseDate)])).get();
-  }
-  
-  Future<int> insertExpense(ExpensesCompanion expense) {
-    final expenseWithId = expense.id == const Value.absent()
-        ? expense.copyWith(id: Value(uuid.v4()))
-        : expense;
-    return into(expenses).insert(expenseWithId);
+    final totalReceivables = await (select(transactions)
+      ..where((t) => t.status.equals('active')))
+      .addColumns([transactions.remainingDebt.sum()])
+      .map((row) => row.read(transactions.remainingDebt.sum()) ?? 0.0)
+      .getSingle();
+
+    final totalSalesToday = await (select(transactions)
+      ..where((t) => t.transactionDate.isBiggerOrEqualValue(startOfDay)))
+      .addColumns([transactions.totalPayable.sum()])
+      .map((row) => row.read(transactions.totalPayable.sum()) ?? 0.0)
+      .getSingle();
+
+    final transactionsToday = await (select(transactions)
+      ..where((t) => t.transactionDate.isBiggerOrEqualValue(startOfDay)))
+      .addColumns([transactions.id.count()])
+      .map((row) => row.read(transactions.id.count()) ?? 0)
+      .getSingle();
+    
+    final newCustomersThisMonth = await (select(customers)
+      ..where((c) => c.createdAt.isBiggerOrEqualValue(startOfMonth)))
+      .addColumns([customers.id.count()])
+      .map((row) => row.read(customers.id.count()) ?? 0)
+      .getSingle();
+
+    return DashboardStats(
+      totalReceivables: totalReceivables,
+      totalSalesToday: totalSalesToday,
+      transactionsToday: transactionsToday,
+      newCustomersThisMonth: newCustomersThisMonth,
+    );
   }
 
-  // ==================== STORE SETTINGS ====================
-  
-  Future<StoreSettingData?> getStoreSettings() {
-    return (select(storeSettings)..where((s) => s.id.equals(1)))
-        .getSingleOrNull();
+  Stream<List<TransactionWithCustomer>> watchTransactionsByDateRange(DateTime start, DateTime end) {
+    final query = select(transactions).join([
+      innerJoin(customers, customers.id.equalsExp(transactions.customerId)),
+    ])
+      ..where(transactions.transactionDate.isBetweenValues(start, end))
+      ..where(transactions.status.isNotValue('cancelled'))
+      ..orderBy([OrderingTerm.desc(transactions.transactionDate)]);
+
+    return query.watch().map((rows) {
+      return rows.map((row) {
+        return TransactionWithCustomer(
+          transaction: row.readTable(transactions),
+          customer: row.readTable(customers),
+        );
+      }).toList();
+    });
   }
-  
-  Future<bool> updateStoreSettings(StoreSettingsCompanion settings) {
-    return update(storeSettings).replace(settings);
+
+  Stream<List<TransactionWithCustomer>> watchTransactionsByStatus(List<String> statuses) {
+     final query = select(transactions).join([
+      innerJoin(customers, customers.id.equalsExp(transactions.customerId)),
+    ])
+      ..where(transactions.status.isIn(statuses))
+      ..orderBy([OrderingTerm.asc(transactions.nextPaymentDue)]);
+
+    return query.watch().map((rows) {
+      return rows.map((row) {
+        return TransactionWithCustomer(
+          transaction: row.readTable(transactions),
+          customer: row.readTable(customers),
+        );
+      }).toList();
+    });
   }
 }
 
 LazyDatabase _openConnection() {
-// ... (method _openConnection tetap sama) ...
   return LazyDatabase(() async {
     final dbFolder = await getApplicationDocumentsDirectory();
     final file = File(p.join(dbFolder.path, 'asverta_db.sqlite'));

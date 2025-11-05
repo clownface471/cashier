@@ -1,10 +1,11 @@
+import 'package:asverta/presentation/providers/transaction_provider.dart';
+import 'package:asverta/presentation/screens/transactions/transaction_detail_screen.dart';
+import 'package:asverta/presentation/screens/transactions/transaction_form_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/utils/currency_formatter.dart';
-import '../../providers/transaction_provider.dart';
-// ==== FIX: Uncomment import form transaksi ====
-import 'transaction_form_screen.dart';
-// ==== AKHIR FIX ====
+import 'package:asverta/core/utils/currency_formatter.dart';
+import 'package:asverta/data/database/app_database.dart';
+import 'package:intl/intl.dart';
 
 class TransactionsScreen extends ConsumerStatefulWidget {
   const TransactionsScreen({super.key});
@@ -14,32 +15,27 @@ class TransactionsScreen extends ConsumerStatefulWidget {
 }
 
 class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
-  String _searchQuery = ''; // Akan digunakan nanti
+  String _searchQuery = '';
 
   @override
   Widget build(BuildContext context) {
-    final transactionsAsync = ref.watch(transactionsStreamProvider);
+    final transactionsAsync = ref.watch(transactionsProvider);
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Riwayat Transaksi'),
-        backgroundColor: Theme.of(context).colorScheme.primary,
-        foregroundColor: Colors.white,
       ),
       body: Column(
         children: [
-          // Search Bar (Akan difungsikan nanti)
           Padding(
             padding: const EdgeInsets.all(16),
             child: TextField(
               decoration: InputDecoration(
-                hintText: 'Cari transaksi (nama, no. invoice)...',
+                hintText: 'Cari nama pelanggan...',
                 prefixIcon: const Icon(Icons.search),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
-                filled: true,
-                fillColor: Colors.grey[100],
               ),
               onChanged: (value) {
                 setState(() {
@@ -48,146 +44,109 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
               },
             ),
           ),
-
-          // Transactions List
           Expanded(
             child: transactionsAsync.when(
               data: (transactions) {
-                if (transactions.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.receipt_long_outlined,
-                          size: 80,
-                          color: Colors.grey[400],
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'Belum ada transaksi',
-                          style: TextStyle(
-                            fontSize: 18,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Tap tombol + untuk membuat transaksi baru',
-                          style: TextStyle(color: Colors.grey[500]),
-                        ),
-                      ],
+                final filteredList = transactions.where((item) {
+                  final customerName = item.customer.name.toLowerCase();
+                  return customerName.contains(_searchQuery.toLowerCase());
+                }).toList();
+
+                if (filteredList.isEmpty) {
+                  return const Center(
+                    child: Text(
+                      'Belum ada transaksi',
+                      style: TextStyle(fontSize: 16, color: Colors.grey),
                     ),
                   );
                 }
-
-                // TODO: Filter 'transactions' berdasarkan _searchQuery di sini
-
                 return ListView.builder(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: transactions.length,
+                  itemCount: filteredList.length,
                   itemBuilder: (context, index) {
-                    final txWithCustomer = transactions[index];
-                    final transaction = txWithCustomer.transaction;
-                    final customer = txWithCustomer.customer;
-
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      child: ListTile(
-                        contentPadding: const EdgeInsets.all(12),
-                        leading: CircleAvatar(
-                          backgroundColor:
-                              Theme.of(context).colorScheme.primaryContainer,
-                          child: Icon(
-                            Icons.receipt,
-                            color: Theme.of(context).colorScheme.primary,
-                          ),
-                        ),
-                        title: Text(
-                          customer.name, // Kita dapat nama pelanggan dari JOIN
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const SizedBox(height: 4),
-                            Text(
-                              'Total: ${CurrencyFormatter.format(transaction.totalPayable)}',
-                              style: TextStyle(
-                                color: Theme.of(context).colorScheme.primary,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Sisa: ${CurrencyFormatter.format(transaction.remainingDebt)}',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey[600],
-                                fontWeight: FontWeight.normal,
-                              ),
-                            ),
-                          ],
-                        ),
-                        trailing: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Text(
-                              transaction.status, // 'active', 'completed', dll.
-                              style: TextStyle(
-                                color: transaction.status == 'completed'
-                                    ? Colors.green
-                                    : Colors.orange,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 12,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              '${transaction.paidInstallments}/${transaction.tenor} bulan',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey[500],
-                              ),
-                            ),
-                          ],
-                        ),
-                        onTap: () {
-                          // TODO: Navigasi ke detail transaksi
-                        },
-                      ),
-                    );
+                    final item = filteredList[index];
+                    return _buildTransactionTile(context, item);
                   },
                 );
               },
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (error, stack) => Center(
-                child: Text('Error: $error\n$stack'),
-              ),
+              error: (e, s) => Center(child: Text('Gagal memuat transaksi: $e')),
             ),
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _navigateToAddTransaction,
-        icon: const Icon(Icons.add),
-        label: const Text('Buat Transaksi'),
+      floatingActionButton: FloatingActionButton(
+        heroTag: 'fab-transaksi',
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const TransactionFormScreen(),
+            ),
+          );
+        },
+        child: const Icon(Icons.add),
       ),
     );
   }
 
-  void _navigateToAddTransaction() {
-    // ==== FIX: Aktifkan navigasi ====
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const TransactionFormScreen(),
+  Widget _buildTransactionTile(
+      BuildContext context, TransactionWithCustomer item) {
+    final tx = item.transaction;
+    final customer = item.customer;
+    final isCompleted = tx.status == 'completed';
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: ListTile(
+        leading: CircleAvatar(
+          backgroundColor: isCompleted
+              ? Colors.green.shade100
+              : Colors.orange.shade100,
+          child: Icon(
+            isCompleted ? Icons.check : Icons.hourglass_bottom,
+            color: isCompleted ? Colors.green.shade800 : Colors.orange.shade800,
+          ),
+        ),
+        title: Text(
+          customer.name,
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        subtitle: Text(
+          DateFormat('dd MMM yyyy').format(tx.transactionDate),
+        ),
+        trailing: Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              CurrencyFormatter.format(tx.totalPayable),
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 15,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Sisa: ${CurrencyFormatter.format(tx.remainingDebt)}',
+              style: TextStyle(
+                fontSize: 12,
+                color: isCompleted ? Colors.green : Colors.red,
+              ),
+            ),
+          ],
+        ),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => TransactionDetailScreen(
+                transactionId: tx.id,
+              ),
+            ),
+          );
+        },
       ),
     );
-    // ==== AKHIR FIX ====
   }
 }
-

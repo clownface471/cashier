@@ -29,7 +29,6 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
           IconButton(
             icon: const Icon(Icons.category),
             onPressed: () {
-              // TODO: Navigate to categories management
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Kategori - Coming soon')),
               );
@@ -39,7 +38,6 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
       ),
       body: Column(
         children: [
-          // Search Bar
           Padding(
             padding: const EdgeInsets.all(16),
             child: TextField(
@@ -59,8 +57,6 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
               },
             ),
           ),
-
-          // Products List
           Expanded(
             child: productsAsync.when(
               data: (products) {
@@ -219,6 +215,7 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'fab_products_screen',
         onPressed: _navigateToAddProduct,
         icon: const Icon(Icons.add),
         label: const Text('Tambah Produk'),

@@ -1,11 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../data/database/app_database.dart';
-// ==== FIX: Lupa import provider ====
-// Ini dibutuhkan agar screen tahu 'customersStreamProvider', 'searchCustomersProvider',
-// dan 'customerRepositoryProvider'.
 import '../../providers/customer_provider.dart';
-// ==== AKHIR FIX ====
 import 'customer_form_screen.dart';
 
 class CustomersScreen extends ConsumerStatefulWidget {
@@ -32,12 +27,11 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
       ),
       body: Column(
         children: [
-          // Search Bar
           Padding(
             padding: const EdgeInsets.all(16),
             child: TextField(
               decoration: InputDecoration(
-                hintText: 'Cari pelanggan (nama, HP, KTP)...',
+                hintText: 'Cari pelanggan...',
                 prefixIcon: const Icon(Icons.search),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -52,8 +46,6 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
               },
             ),
           ),
-
-          // Customers List
           Expanded(
             child: customersAsync.when(
               data: (customers) {
@@ -77,7 +69,7 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Tap tombol + untuk menambah pelanggan',
+                          'Tap tombol + untuk menambah pelanggan baru',
                           style: TextStyle(color: Colors.grey[500]),
                         ),
                       ],
@@ -109,38 +101,7 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const SizedBox(height: 4),
-                            Text(
-                              customer.phone ?? 'No. HP tidak ada',
-                              style: TextStyle(
-                                color: Theme.of(context).colorScheme.primary,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            if (customer.address != null &&
-                                customer.address!.isNotEmpty)
-                              Row(
-                                children: [
-                                  Icon(Icons.location_on,
-                                      size: 14, color: Colors.grey[600]),
-                                  const SizedBox(width: 4),
-                                  Expanded(
-                                    child: Text(
-                                      customer.address!,
-                                      style: TextStyle(
-                                          fontSize: 12,
-                                          color: Colors.grey[600]),
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                          ],
-                        ),
+                        subtitle: Text(customer.phone ?? 'No. HP tidak ada'),
                         trailing: PopupMenuButton(
                           itemBuilder: (context) => [
                             const PopupMenuItem(
@@ -157,11 +118,9 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                               value: 'delete',
                               child: Row(
                                 children: [
-                                  Icon(Icons.delete,
-                                      size: 20, color: Colors.red),
+                                  Icon(Icons.delete, size: 20, color: Colors.red),
                                   SizedBox(width: 8),
-                                  Text('Hapus',
-                                      style: TextStyle(color: Colors.red)),
+                                  Text('Hapus', style: TextStyle(color: Colors.red)),
                                 ],
                               ),
                             ),
@@ -170,8 +129,7 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                             if (value == 'edit') {
                               _navigateToEditCustomer(customer.id);
                             } else if (value == 'delete') {
-                              _showDeleteConfirmation(
-                                  customer.id, customer.name);
+                              _showDeleteConfirmation(customer.id, customer.name);
                             }
                           },
                         ),
@@ -190,11 +148,10 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'fab_customers_screen',
         onPressed: _navigateToAddCustomer,
         icon: const Icon(Icons.add),
         label: const Text('Tambah Pelanggan'),
-        backgroundColor: Theme.of(context).colorScheme.secondary,
-        foregroundColor: Theme.of(context).colorScheme.onSecondary,
       ),
     );
   }
@@ -244,7 +201,6 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
   Future<void> _deleteCustomer(String customerId) async {
     try {
       final repository = ref.read(customerRepositoryProvider);
-      // Ganti ke softDelete jika Anda ingin implementasi itu
       await repository.softDeleteCustomer(customerId);
 
       if (mounted) {
@@ -261,4 +217,3 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
     }
   }
 }
-
