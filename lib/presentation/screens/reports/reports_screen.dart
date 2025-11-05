@@ -4,6 +4,8 @@ import 'package:asverta/presentation/providers/transaction_provider.dart';
 import 'package:asverta/presentation/screens/reports/report_detail_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:asverta/data/models/transaction_models.dart';
+import 'package:asverta/presentation/models/report_models.dart';
 
 class ReportsScreen extends ConsumerWidget {
   const ReportsScreen({super.key});

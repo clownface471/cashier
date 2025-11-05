@@ -7,7 +7,7 @@ part of 'transaction_provider.dart';
 // **************************************************************************
 
 String _$transactionRepositoryHash() =>
-    r'76b245ac9c558553db296d498a3eae7ba6006b7e';
+    r'5f9b9568805d3e6acab6d47005d94bef273317b2';
 
 /// See also [transactionRepository].
 @ProviderFor(transactionRepository)
@@ -26,23 +26,25 @@ final transactionRepositoryProvider =
 // ignore: unused_element
 typedef TransactionRepositoryRef
     = AutoDisposeProviderRef<TransactionRepository>;
-String _$transactionsHash() => r'6b75be92d4c3f19eaade69cc6be84e6e691f7feb';
+String _$transactionsStreamHash() =>
+    r'864a031d23910402bc9dbfd7fd3d836d360ffab4';
 
-/// See also [transactions].
-@ProviderFor(transactions)
-final transactionsProvider =
+/// See also [transactionsStream].
+@ProviderFor(transactionsStream)
+final transactionsStreamProvider =
     AutoDisposeStreamProvider<List<TransactionWithCustomer>>.internal(
-  transactions,
-  name: r'transactionsProvider',
-  debugGetCreateSourceHash:
-      const bool.fromEnvironment('dart.vm.product') ? null : _$transactionsHash,
+  transactionsStream,
+  name: r'transactionsStreamProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$transactionsStreamHash,
   dependencies: null,
   allTransitiveDependencies: null,
 );
 
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
-typedef TransactionsRef
+typedef TransactionsStreamRef
     = AutoDisposeStreamProviderRef<List<TransactionWithCustomer>>;
 String _$transactionDetailsHash() =>
     r'ec1a1f0ed5e56cdcd6f52ec65c8b3fc3236e4dd7';
@@ -360,7 +362,7 @@ final dashboardStatsProvider =
 // ignore: unused_element
 typedef DashboardStatsRef = AutoDisposeFutureProviderRef<DashboardStats>;
 String _$filteredTransactionsHash() =>
-    r'6477144669ec462c92999a72f5dfff077a226dad';
+    r'0a678b8a46407255cd3fdf561f1c87a5f1276c71';
 
 /// See also [filteredTransactions].
 @ProviderFor(filteredTransactions)
@@ -373,11 +375,15 @@ class FilteredTransactionsFamily
   const FilteredTransactionsFamily();
 
   /// See also [filteredTransactions].
-  FilteredTransactionsProvider call(
-    ReportFilterType filterType,
-  ) {
+  FilteredTransactionsProvider call({
+    DateTime? startDate,
+    DateTime? endDate,
+    List<String>? statuses,
+  }) {
     return FilteredTransactionsProvider(
-      filterType,
+      startDate: startDate,
+      endDate: endDate,
+      statuses: statuses,
     );
   }
 
@@ -386,7 +392,9 @@ class FilteredTransactionsFamily
     covariant FilteredTransactionsProvider provider,
   ) {
     return call(
-      provider.filterType,
+      startDate: provider.startDate,
+      endDate: provider.endDate,
+      statuses: provider.statuses,
     );
   }
 
@@ -409,12 +417,16 @@ class FilteredTransactionsFamily
 class FilteredTransactionsProvider
     extends AutoDisposeStreamProvider<List<TransactionWithCustomer>> {
   /// See also [filteredTransactions].
-  FilteredTransactionsProvider(
-    ReportFilterType filterType,
-  ) : this._internal(
+  FilteredTransactionsProvider({
+    DateTime? startDate,
+    DateTime? endDate,
+    List<String>? statuses,
+  }) : this._internal(
           (ref) => filteredTransactions(
             ref as FilteredTransactionsRef,
-            filterType,
+            startDate: startDate,
+            endDate: endDate,
+            statuses: statuses,
           ),
           from: filteredTransactionsProvider,
           name: r'filteredTransactionsProvider',
@@ -425,7 +437,9 @@ class FilteredTransactionsProvider
           dependencies: FilteredTransactionsFamily._dependencies,
           allTransitiveDependencies:
               FilteredTransactionsFamily._allTransitiveDependencies,
-          filterType: filterType,
+          startDate: startDate,
+          endDate: endDate,
+          statuses: statuses,
         );
 
   FilteredTransactionsProvider._internal(
@@ -435,10 +449,14 @@ class FilteredTransactionsProvider
     required super.allTransitiveDependencies,
     required super.debugGetCreateSourceHash,
     required super.from,
-    required this.filterType,
+    required this.startDate,
+    required this.endDate,
+    required this.statuses,
   }) : super.internal();
 
-  final ReportFilterType filterType;
+  final DateTime? startDate;
+  final DateTime? endDate;
+  final List<String>? statuses;
 
   @override
   Override overrideWith(
@@ -455,7 +473,9 @@ class FilteredTransactionsProvider
         dependencies: null,
         allTransitiveDependencies: null,
         debugGetCreateSourceHash: null,
-        filterType: filterType,
+        startDate: startDate,
+        endDate: endDate,
+        statuses: statuses,
       ),
     );
   }
@@ -469,13 +489,17 @@ class FilteredTransactionsProvider
   @override
   bool operator ==(Object other) {
     return other is FilteredTransactionsProvider &&
-        other.filterType == filterType;
+        other.startDate == startDate &&
+        other.endDate == endDate &&
+        other.statuses == statuses;
   }
 
   @override
   int get hashCode {
     var hash = _SystemHash.combine(0, runtimeType.hashCode);
-    hash = _SystemHash.combine(hash, filterType.hashCode);
+    hash = _SystemHash.combine(hash, startDate.hashCode);
+    hash = _SystemHash.combine(hash, endDate.hashCode);
+    hash = _SystemHash.combine(hash, statuses.hashCode);
 
     return _SystemHash.finish(hash);
   }
@@ -485,8 +509,14 @@ class FilteredTransactionsProvider
 // ignore: unused_element
 mixin FilteredTransactionsRef
     on AutoDisposeStreamProviderRef<List<TransactionWithCustomer>> {
-  /// The parameter `filterType` of this provider.
-  ReportFilterType get filterType;
+  /// The parameter `startDate` of this provider.
+  DateTime? get startDate;
+
+  /// The parameter `endDate` of this provider.
+  DateTime? get endDate;
+
+  /// The parameter `statuses` of this provider.
+  List<String>? get statuses;
 }
 
 class _FilteredTransactionsProviderElement
@@ -495,8 +525,12 @@ class _FilteredTransactionsProviderElement
   _FilteredTransactionsProviderElement(super.provider);
 
   @override
-  ReportFilterType get filterType =>
-      (origin as FilteredTransactionsProvider).filterType;
+  DateTime? get startDate => (origin as FilteredTransactionsProvider).startDate;
+  @override
+  DateTime? get endDate => (origin as FilteredTransactionsProvider).endDate;
+  @override
+  List<String>? get statuses =>
+      (origin as FilteredTransactionsProvider).statuses;
 }
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

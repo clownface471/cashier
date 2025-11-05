@@ -5,6 +5,7 @@ import 'package:asverta/presentation/screens/transactions/transaction_detail_scr
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:asverta/presentation/models/report_models.dart';
 
 class ReportDetailScreen extends ConsumerWidget {
   final String title;
