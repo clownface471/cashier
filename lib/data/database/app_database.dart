@@ -292,6 +292,7 @@ class AppDatabase extends _$AppDatabase {
     );
   }
   
+  
   /// Method yang hilang #3: Query agregat kustom untuk statistik
   Future<DashboardStats> getDashboardStats() async {
     // ... (Logika method ini sudah benar, tidak ada perubahan) ...
@@ -334,7 +335,7 @@ class AppDatabase extends _$AppDatabase {
       innerJoin(customers, customers.id.equalsExp(transactions.customerId))
     ])
       // [FIX] isBetween membutuhkan Value(), bukan DateTime langsung
-      ..where(transactions.transactionDate.isBetween(Value(start), Value(end)));
+      ..where(transactions.transactionDate.isBetween(Constant(start), Constant(end)));
       
     query.orderBy([OrderingTerm.desc(transactions.transactionDate)]);
     
@@ -371,7 +372,7 @@ class AppDatabase extends _$AppDatabase {
   // ========================================================
   // ==== [AKHIR] KODE BARU UNTUK MEMPERBAIKI EROR ====
   // ========================================================
-}=
+}
 
 LazyDatabase _openConnection() {
   return LazyDatabase(() async {

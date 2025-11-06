@@ -19,7 +19,7 @@ class ReportDetailScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final transactionsAsync = ref.watch(filteredTransactionsProvider(filterType));
+    final transactionsAsync = ref.watch(filteredTransactionsProvider());
 
     return Scaffold(
       appBar: AppBar(
@@ -59,9 +59,8 @@ class ReportDetailScreen extends ConsumerWidget {
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       child: ListTile(
         leading: CircleAvatar(
-          backgroundColor: isCompleted
-              ? Colors.green.shade100
-              : Colors.orange.shade100,
+          backgroundColor:
+              isCompleted ? Colors.green.shade100 : Colors.orange.shade100,
           child: Icon(
             isCompleted ? Icons.check : Icons.hourglass_bottom,
             color: isCompleted ? Colors.green.shade800 : Colors.orange.shade800,

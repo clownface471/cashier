@@ -1,3 +1,4 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../data/database/app_database.dart';
 import '../../data/repositories/payment_repository.dart';
@@ -7,7 +8,7 @@ part 'payment_provider.g.dart';
 
 // Repository Provider
 @riverpod
-PaymentRepository paymentRepository(PaymentRepositoryRef ref) {
+PaymentRepository paymentRepository(Ref ref) {
   final database = ref.watch(appDatabaseProvider);
   return PaymentRepository(database);
 }
@@ -15,7 +16,7 @@ PaymentRepository paymentRepository(PaymentRepositoryRef ref) {
 // Watch payments for a specific transaction (Stream)
 @riverpod
 Stream<List<PaymentData>> paymentsStream(
-  PaymentsStreamRef ref,
+  Ref ref,
   String transactionId,
 ) {
   final repository = ref.watch(paymentRepositoryProvider);
@@ -25,7 +26,7 @@ Stream<List<PaymentData>> paymentsStream(
 // Get payment summary for a transaction
 @riverpod
 Future<Map<String, dynamic>> paymentSummary(
-  PaymentSummaryRef ref,
+  Ref ref,
   String transactionId,
 ) {
   final repository = ref.watch(paymentRepositoryProvider);
@@ -34,7 +35,7 @@ Future<Map<String, dynamic>> paymentSummary(
 
 // Get overdue transactions
 @riverpod
-Future<List<TransactionData>> overdueTransactions(OverdueTransactionsRef ref) {
+Future<List<TransactionData>> overdueTransactions(Ref ref) {
   final repository = ref.watch(paymentRepositoryProvider);
   return repository.getOverdueTransactions();
 }

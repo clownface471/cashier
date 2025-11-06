@@ -1,56 +1,55 @@
-// [SALIN DAN GANTI SELURUH FILE transaction_provider.dart ANDA DENGAN INI]
-import 'package:asverta/data/database/app_database.dart';
-import 'package:asverta/data/models/transaction_models.dart';
-import 'package:asverta/data/repositories/transaction_repository.dart';
-// [FIX] Impor anotasi untuk 'Ref'
-import 'package:riverpod_annotation/riverpod_annotation.dart'; 
-
-// [FIX] Impor provider database yang baru saja kita buat
-import 'database_provider.dart'; 
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+import '../../data/database/app_database.dart';
+import '../../data/models/transaction_models.dart';
+import '../../data/repositories/transaction_repository.dart';
+import 'database_provider.dart';
 
 part 'transaction_provider.g.dart';
 
-// [FIX] Menggunakan sintaks Riverpod modern
-// Menyediakan instance TransactionRepository
+// Repository Provider
 @riverpod
 TransactionRepository transactionRepository(TransactionRepositoryRef ref) {
-  // [FIX] Sekarang me-watch 'databaseProvider' yang sudah ada
-  final db = ref.watch(databaseProvider); 
-  return TransactionRepository(db);
+  // FIX: Changed from 'databaseProvider' to 'appDatabaseProvider'
+  final database = ref.watch(appDatabaseProvider);
+  return TransactionRepository(database);
 }
 
-// [FIX] Provider untuk stream semua transaksi
+// Watch all transactions (Stream)
 @riverpod
-Stream<List<TransactionWithCustomer>> transactionsStream(TransactionsStreamRef ref) {
+Stream<List<TransactionWithCustomer>> transactionsStream(
+    TransactionsStreamRef ref) {
   final repository = ref.watch(transactionRepositoryProvider);
   return repository.watchAllTransactions();
 }
 
-// [FIX] Provider untuk detail satu transaksi
+// Get transaction details
 @riverpod
 Future<TransactionFullDetails> transactionDetails(
-    TransactionDetailsRef ref, String transactionId) {
+  TransactionDetailsRef ref,
+  String transactionId,
+) {
   final repository = ref.watch(transactionRepositoryProvider);
   return repository.getFullTransactionDetails(transactionId);
 }
 
-// [FIX] Provider untuk stream pembayaran
+// Watch payments for a specific transaction
 @riverpod
 Stream<List<PaymentData>> paymentsForTransaction(
-    PaymentsForTransactionRef ref, String transactionId) {
+  PaymentsForTransactionRef ref,
+  String transactionId,
+) {
   final repository = ref.watch(transactionRepositoryProvider);
   return repository.watchPaymentsForTransaction(transactionId);
 }
 
-// [FIX] Provider untuk statistik dashboard
+// Get dashboard statistics
 @riverpod
 Future<DashboardStats> dashboardStats(DashboardStatsRef ref) {
   final repository = ref.watch(transactionRepositoryProvider);
   return repository.getDashboardStats();
 }
 
-// [FIX] Provider untuk transaksi yang difilter
-// Ini memerlukan parameter, jadi kita buat family
+// Watch filtered transactions
 @riverpod
 Stream<List<TransactionWithCustomer>> filteredTransactions(
   FilteredTransactionsRef ref, {
@@ -59,14 +58,14 @@ Stream<List<TransactionWithCustomer>> filteredTransactions(
   List<String>? statuses,
 }) {
   final repository = ref.watch(transactionRepositoryProvider);
-  
+
   if (startDate != null && endDate != null) {
     return repository.watchTransactionsByDateRange(startDate, endDate);
   }
   if (statuses != null && statuses.isNotEmpty) {
     return repository.watchTransactionsByStatus(statuses);
   }
-  
-  // Default: kembalikan semua transaksi jika tidak ada filter
+
+  // Default: return all transactions if no filter
   return repository.watchAllTransactions();
 }

@@ -1,3 +1,4 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../data/database/app_database.dart';
 import '../../data/repositories/product_repository.dart';
@@ -7,35 +8,35 @@ part 'product_provider.g.dart';
 
 // Repository Provider
 @riverpod
-ProductRepository productRepository(ProductRepositoryRef ref) {
+ProductRepository productRepository(Ref ref) {
   final database = ref.watch(appDatabaseProvider);
   return ProductRepository(database);
 }
 
 // Watch all products (Stream)
 @riverpod
-Stream<List<ProductData>> productsStream(ProductsStreamRef ref) {
+Stream<List<ProductData>> productsStream(Ref ref) {
   final repository = ref.watch(productRepositoryProvider);
   return repository.watchAllProducts();
 }
 
 // Get products as Future (for one-time fetch)
 @riverpod
-Future<List<ProductData>> products(ProductsRef ref) {
+Future<List<ProductData>> products(Ref ref) {
   final repository = ref.watch(productRepositoryProvider);
   return repository.getAllProducts();
 }
 
 // Get active products only
 @riverpod
-Future<List<ProductData>> activeProducts(ActiveProductsRef ref) {
+Future<List<ProductData>> activeProducts(Ref ref) {
   final repository = ref.watch(productRepositoryProvider);
   return repository.getActiveProducts();
 }
 
 // Get low stock products
 @riverpod
-Future<List<ProductData>> lowStockProducts(LowStockProductsRef ref) {
+Future<List<ProductData>> lowStockProducts(Ref ref) {
   final repository = ref.watch(productRepositoryProvider);
   return repository.getLowStockProducts();
 }
@@ -43,7 +44,7 @@ Future<List<ProductData>> lowStockProducts(LowStockProductsRef ref) {
 // Search products
 @riverpod
 Future<List<ProductData>> searchProducts(
-  SearchProductsRef ref,
+  Ref ref,
   String query,
 ) {
   if (query.isEmpty) {
@@ -55,7 +56,7 @@ Future<List<ProductData>> searchProducts(
 
 // Get total stock value
 @riverpod
-Future<double> totalStockValue(TotalStockValueRef ref) {
+Future<double> totalStockValue(Ref ref) {
   final repository = ref.watch(productRepositoryProvider);
   return repository.getTotalStockValue();
 }

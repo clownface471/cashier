@@ -1,6 +1,5 @@
 import 'package:asverta/data/database/app_database.dart';
-// [FIX] Tambahkan impor untuk data class kustom yang baru
-import 'package:asverta/data/models/transaction_models.dart'; 
+import 'package:asverta/data/models/transaction_models.dart';
 import 'package:drift/drift.dart';
 import 'package:uuid/uuid.dart';
 
